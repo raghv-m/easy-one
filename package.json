@@ -1,0 +1,21 @@
+{
+  "name": "restaurant-management-system",
+  "version": "1.0.0",
+  "description": "Cross-platform restaurant management and ordering system",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "web",
+    "mobile"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
+

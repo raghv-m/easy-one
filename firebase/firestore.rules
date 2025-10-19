@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserOrgId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isManager() {
+      return getUserRole() == 'Manager';
+    }
+
+    function isKitchenStaff() {
+      return getUserRole() == 'Kitchen Staff';
+    }
+
+    function isFrontStaff() {
+      return getUserRole() == 'Front Staff';
+    }
+
+    function isExpoStaff() {
+      return getUserRole() == 'Expo Staff';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || getUserRole() == 'Manager');
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated();
+    }
+
+    // Organizations collection
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated() && getUserOrgId() == orgId;
+      allow write: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+
+      // Employees subcollection
+      match /employees/{employeeId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+      }
+
+      // Orders subcollection
+      match /orders/{orderId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow create: if isAuthenticated() && (isFrontStaff() || isManager()) && getUserOrgId() == orgId;
+        allow update: if isAuthenticated() && (isKitchenStaff() || isExpoStaff() || isManager()) && getUserOrgId() == orgId;
+      }
+
+      // Menus subcollection
+      match /menus/{menuId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+      }
+
+      // Tables subcollection
+      match /tables/{tableId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && (isFrontStaff() || isManager()) && getUserOrgId() == orgId;
+      }
+
+      // Kitchen Categories subcollection
+      match /kitchenCategories/{categoryId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+      }
+
+      // Kitchen Screens subcollection
+      match /kitchenScreens/{screenId} {
+        allow read: if isAuthenticated() && (isKitchenStaff() || isManager()) && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && (isKitchenStaff() || isManager()) && getUserOrgId() == orgId;
+      }
+
+      // Shifts subcollection
+      match /shifts/{shiftId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow create: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+        allow update: if isAuthenticated() && (isManager() || request.auth.uid == resource.data.employeeId) && getUserOrgId() == orgId;
+      }
+
+      // Shift Trades subcollection
+      match /shiftTrades/{tradeId} {
+        allow read: if isAuthenticated() && getUserOrgId() == orgId;
+        allow create: if isAuthenticated() && getUserOrgId() == orgId;
+        allow update: if isAuthenticated() && (isManager() || request.auth.uid == resource.data.requestedBy) && getUserOrgId() == orgId;
+      }
+
+      // Invitations subcollection
+      match /invitations/{inviteId} {
+        allow read: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+        allow write: if isAuthenticated() && isManager() && getUserOrgId() == orgId;
+      }
+    }
+  }
+}
+
