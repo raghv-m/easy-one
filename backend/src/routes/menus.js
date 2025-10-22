@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/', authMiddleware, requireRole(['Manager']), async (req, res) => {
   try {
     const { orgId } = req.user;
-    const { name, description, price, category, components, modifiers, allergens, image, notifyEmployees = true } = req.body;
+    const { name, description, price, category, components, modifiers, allergens, image, prepTime, cookTime, notifyEmployees = true } = req.body;
 
     if (!name || !price || !category) {
       return res.status(400).json({ error: 'Name, price, and category required' });
@@ -27,10 +27,12 @@ router.post('/', authMiddleware, requireRole(['Manager']), async (req, res) => {
       description: description || '',
       price,
       category,
-      components: components || [], // Array of {name, station, quantity}
+      components: components || [], // Array of {step, station, duration}
       modifiers: modifiers || [],
       allergens: allergens || [],
       image: image || '',
+      prepTime: prepTime || 0,
+      cookTime: cookTime || 0,
       available: true,
       createdAt: new Date(),
       updatedAt: new Date(),

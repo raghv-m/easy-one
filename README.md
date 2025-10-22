@@ -61,6 +61,13 @@ npm install
 npm start
 ```
 
+6. **Seed Indian Menu Items**
+```bash
+cd backend
+node scripts/seed-indian-menu.js
+```
+This adds 13 authentic Indian menu items with complete recipes and cooking steps.
+
 ## 📋 Features
 
 ### Core Functionality
@@ -72,11 +79,59 @@ npm start
 - ✅ Email notifications
 - ✅ Analytics and reporting
 
+### NEW: Organization & Order Management
+- ✅ Organization settings (name, address, phone, email, cuisine)
+- ✅ Table arrangement storage and management
+- ✅ Complete order tracking with server name, guest info, allergies
+- ✅ Automatic prep time calculation
+- ✅ Order history categorized by dates
+- ✅ Order analytics dashboard
+
+### NEW: Menu Management
+- ✅ 13 authentic Indian menu items pre-seeded
+- ✅ Complete recipes with cooking steps
+- ✅ Station assignments (Prep, Grill, Fryer, Sauté, Pastry, Plating, Expo)
+- ✅ Allergen tracking
+- ✅ Realistic pricing ($2.49 - $14.99)
+
+### NEW: Kitchen Operations
+- ✅ Recipe display on kitchen screen
+- ✅ Cooking steps with durations
+- ✅ Allergen warnings
+- ✅ Guest information display
+- ✅ Special instructions highlighting
+- ✅ Per-item notes
+
 ### Roles
 - **Manager**: Full system access, employee management, menu configuration
 - **Front Staff**: Order creation, table management, limited discounts
 - **Kitchen Staff**: Order preparation, category-specific screens
 - **Expo Staff**: Order finalization and pickup management
+
+## 🍽️ Menu Items (13 Indian Items)
+
+### Main Courses
+- Butter Chicken - $14.99 (25 min)
+- Paneer Tikka Masala - $13.99 (20 min)
+- Tandoori Chicken - $12.99 (20 min)
+- Biryani (Chicken) - $13.99 (30 min)
+
+### Appetizers
+- Samosa (3 pieces) - $4.99 (12 min)
+- Pakora (Mixed Vegetable) - $5.99 (10 min)
+
+### Breads
+- Naan Bread - $2.99 (5 min)
+- Garlic Naan - $3.49 (5 min)
+
+### Vegetarian
+- Dal Makhani - $9.99 (35 min)
+- Chana Masala - $8.99 (20 min)
+
+### Desserts & Beverages
+- Gulab Jamun (3 pieces) - $4.99 (15 min)
+- Mango Lassi - $3.99 (0 min)
+- Masala Chai - $2.49 (5 min)
 
 ## 🔧 Configuration
 
@@ -151,6 +206,13 @@ VITE_API_URL=http://localhost:3000/api
 - `GET /api/analytics/orders` - Order statistics
 - `GET /api/analytics/prep-times` - Prep time analytics
 - `GET /api/analytics/employees` - Employee statistics
+
+### Organization (NEW)
+- `GET /api/organization/settings` - Get organization settings
+- `PUT /api/organization/settings` - Update organization settings
+- `GET /api/organization/tables/arrangements` - Get table layout
+- `POST /api/organization/tables/arrangements` - Save table layout
+- `GET /api/organization/analytics/orders` - Get order analytics with date filtering
 
 ## 🔐 Security
 

@@ -42,6 +42,7 @@ const AdminPage = () => {
   const tabs = [
     { id: 'employees', label: 'Employees', icon: Users },
     { id: 'tables', label: 'Tables', icon: Table2 },
+    { id: 'menu', label: 'Menu Items', icon: UtensilsCrossed },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -50,6 +51,8 @@ const AdminPage = () => {
       fetchEmployees();
     } else if (activeTab === 'tables') {
       fetchTables();
+    } else if (activeTab === 'menu') {
+      navigate('/menu-items');
     }
   }, [activeTab]);
 

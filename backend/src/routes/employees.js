@@ -258,8 +258,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Update employee role
-router.patch('/:employeeId', requireRole(['Manager']), async (req, res) => {
+// Update employee role (PATCH)
+router.patch('/:employeeId', authMiddleware, requireRole(['Manager']), async (req, res) => {
   try {
     const { orgId } = req.user;
     const { employeeId } = req.params;
@@ -279,6 +279,56 @@ router.patch('/:employeeId', requireRole(['Manager']), async (req, res) => {
 
     res.json({ message: 'Employee updated successfully' });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update employee (PUT)
+router.put('/:employeeId', authMiddleware, requireRole(['Manager']), async (req, res) => {
+  try {
+    const { orgId } = req.user;
+    const { employeeId } = req.params;
+    const { name, email, phone, role, address, emergencyContact, emergencyPhone } = req.body;
+
+    const updates = { updatedAt: new Date() };
+    if (name !== undefined) updates.name = name;
+    if (email !== undefined) updates.email = email;
+    if (phone !== undefined) updates.phone = phone;
+    if (role !== undefined) updates.role = role;
+    if (address !== undefined) updates.address = address;
+    if (emergencyContact !== undefined) updates.emergencyContact = emergencyContact;
+    if (emergencyPhone !== undefined) updates.emergencyPhone = emergencyPhone;
+
+    await getDb()
+      .collection('users')
+      .doc(employeeId)
+      .update(updates);
+
+    res.json({ message: 'Employee updated successfully' });
+  } catch (error) {
+    console.error('Update employee error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete employee
+router.delete('/:employeeId', authMiddleware, requireRole(['Manager']), async (req, res) => {
+  try {
+    const { orgId } = req.user;
+    const { employeeId } = req.params;
+
+    // Verify employee belongs to this organization
+    const empDoc = await getDb().collection('users').doc(employeeId).get();
+    if (!empDoc.exists || empDoc.data().orgId !== orgId) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    // Delete employee
+    await getDb().collection('users').doc(employeeId).delete();
+
+    res.json({ message: 'Employee deleted successfully' });
+  } catch (error) {
+    console.error('Delete employee error:', error);
     res.status(500).json({ error: error.message });
   }
 });

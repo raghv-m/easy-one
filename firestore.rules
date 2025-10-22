@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isManager(orgId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/organizations/$(orgId)/employees/$(request.auth.uid)).data.role == 'Manager';
+    }
+    
+    function isOrgMember(orgId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/organizations/$(orgId)/employees/$(request.auth.uid));
+    }
+    
+    function belongsToOrg(orgId) {
+      return request.auth.token.orgId == orgId;
+    }
+    
+    // Organizations collection
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated() && belongsToOrg(orgId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isManager(orgId);
+      
+      // Employees subcollection
+      match /employees/{employeeId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && (isManager(orgId) || request.auth.uid == employeeId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Invites subcollection
+      match /invites/{inviteId} {
+        allow read: if isAuthenticated() && isManager(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && isManager(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Menus subcollection
+      match /menus/{menuId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && isManager(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Tables subcollection
+      match /tables/{tableId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && isOrgMember(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Orders subcollection
+      match /orders/{orderId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isOrgMember(orgId);
+        allow update: if isAuthenticated() && isOrgMember(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Schedules subcollection
+      match /schedules/{scheduleId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && isManager(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Punches subcollection
+      match /punches/{punchId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isOrgMember(orgId);
+        allow update: if isAuthenticated() && isOrgMember(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isOrgMember(orgId);
+        allow update: if false;
+        allow delete: if isAuthenticated() && (isManager(orgId) || request.auth.uid == resource.data.senderId);
+      }
+      
+      // Channels subcollection
+      match /channels/{channelId} {
+        allow read: if isAuthenticated() && isOrgMember(orgId);
+        allow create: if isAuthenticated() && isManager(orgId);
+        allow update: if isAuthenticated() && isManager(orgId);
+        allow delete: if isAuthenticated() && isManager(orgId);
+      }
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

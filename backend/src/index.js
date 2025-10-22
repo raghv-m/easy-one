@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { initializeFirebase } = require('./config/firebase');
 const { authMiddleware } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
+const { initializeEmailService } = require('./services/emailService');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -19,11 +20,21 @@ const punchesRoutes = require('./routes/punches');
 const invitesRoutes = require('./routes/invites');
 const messagesRoutes = require('./routes/messages');
 const analyticsRoutes = require('./routes/analytics');
+const organizationRoutes = require('./routes/organization');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 
 // Initialize Firebase
 initializeFirebase();
+
+// Initialize Email Service
+try {
+  initializeEmailService();
+  console.log('✅ Email service initialized');
+} catch (error) {
+  console.log('⚠️  Email service not configured:', error.message);
+}
 
 // Middleware
 app.use(cors({
@@ -59,6 +70,8 @@ app.use('/api/schedules', authMiddleware, schedulesRoutes);
 app.use('/api/punches', punchesRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/analytics', authMiddleware, analyticsRoutes);
+app.use('/api/organization', authMiddleware, organizationRoutes);
+app.use('/api/users', authMiddleware, usersRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -113,7 +113,7 @@ router.get('/:tableId', authMiddleware, async (req, res) => {
   }
 });
 
-// Update table
+// Update table (PATCH)
 router.patch('/:tableId', authMiddleware, requireRole(['Front Staff', 'Manager']), async (req, res) => {
   try {
     const { orgId } = req.user;
@@ -126,6 +126,37 @@ router.patch('/:tableId', authMiddleware, requireRole(['Front Staff', 'Manager']
     if (seats) updates.seats = seats;
     if (location) updates.location = location;
     if (type) updates.type = type;
+    if (status === 'occupied' && !updates.openTime) {
+      updates.openTime = new Date();
+    }
+
+    await getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('tables')
+      .doc(tableId)
+      .update(updates);
+
+    res.json({ message: 'Table updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update table (PUT)
+router.put('/:tableId', authMiddleware, requireRole(['Front Staff', 'Manager']), async (req, res) => {
+  try {
+    const { orgId } = req.user;
+    const { tableId } = req.params;
+    const { status, assignedServer, seats, location, type, tableNumber } = req.body;
+
+    const updates = { updatedAt: new Date() };
+    if (status !== undefined) updates.status = status;
+    if (assignedServer !== undefined) updates.assignedServer = assignedServer;
+    if (seats !== undefined) updates.seats = seats;
+    if (location !== undefined) updates.location = location;
+    if (type !== undefined) updates.type = type;
+    if (tableNumber !== undefined) updates.tableNumber = tableNumber;
     if (status === 'occupied' && !updates.openTime) {
       updates.openTime = new Date();
     }

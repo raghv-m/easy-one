@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogOut, ShoppingCart, ChefHat, Users, Calendar, Settings, BarChart3 } from 'lucide-react';
+import { LogOut, ShoppingCart, ChefHat, Users, Calendar, Settings, BarChart3, FileText, Clipboard } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout } = useAuthStore();
@@ -20,6 +20,8 @@ const Dashboard = () => {
     { id: 'schedule', label: 'Schedule', icon: Calendar, color: 'bg-purple-500', roles: ['Front Staff', 'Kitchen Staff', 'Expo Staff', 'Manager'] },
     { id: 'admin', label: 'Admin', icon: Settings, color: 'bg-red-500', roles: ['Manager'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, color: 'bg-indigo-500', roles: ['Manager'] },
+    { id: 'manager', label: 'Manager Dashboard', icon: Clipboard, color: 'bg-cyan-500', roles: ['Manager'] },
+    { id: 'bill', label: 'Bill Generation', icon: FileText, color: 'bg-pink-500', roles: ['Front Staff', 'Manager'] },
   ];
 
   const availableItems = menuItems.filter(item => item.roles.includes(user?.role));
@@ -82,6 +84,8 @@ const Dashboard = () => {
                   {item.id === 'schedule' && 'Manage your shifts'}
                   {item.id === 'admin' && 'Configure restaurant settings'}
                   {item.id === 'analytics' && 'View business metrics'}
+                  {item.id === 'manager' && 'Manage tables, orders & employees'}
+                  {item.id === 'bill' && 'Generate and print bills'}
                 </p>
               </button>
             );

@@ -1,22 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ChefHat, AlertCircle, CheckCircle, Flame } from 'lucide-react';
+import { Clock, ChefHat, AlertCircle, CheckCircle, Flame, BookOpen, X, Users, AlertTriangle, Grid3x3 } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const KitchenScreenPage = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showRecipe, setShowRecipe] = useState(null);
+  const [menuItems, setMenuItems] = useState({});
   const token = useAuthStore((state) => state.token);
 
+  const stations = ['Grill', 'Fryer', 'Prep', 'Sauté', 'Pastry', 'Plating', 'Final'];
+  const stationColors = {
+    'Grill': 'bg-red-600 hover:bg-red-700',
+    'Fryer': 'bg-orange-600 hover:bg-orange-700',
+    'Prep': 'bg-green-600 hover:bg-green-700',
+    'Sauté': 'bg-yellow-600 hover:bg-yellow-700',
+    'Pastry': 'bg-pink-600 hover:bg-pink-700',
+    'Plating': 'bg-purple-600 hover:bg-purple-700',
+    'Final': 'bg-blue-600 hover:bg-blue-700',
+  };
+
   useEffect(() => {
-    fetchKitchenOrders();
+    fetchData();
     const interval = setInterval(fetchKitchenOrders, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [ordersRes, menusRes] = await Promise.all([
+        axios.get(`${API_URL}/orders/kitchen/screen`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_URL}/menus`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setOrders(ordersRes.data.orders);
+
+      // Create menu items map for quick lookup
+      const itemsMap = {};
+      (menusRes.data.menus || menusRes.data.items || []).forEach(item => {
+        itemsMap[item.name] = item;
+      });
+      setMenuItems(itemsMap);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchKitchenOrders = async () => {
     try {
@@ -28,8 +70,6 @@ const KitchenScreenPage = () => {
     } catch (err) {
       console.error('Error fetching kitchen orders:', err);
       setError('Failed to load orders');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -87,12 +127,114 @@ const KitchenScreenPage = () => {
     }
   };
 
+  // Recipe Modal Component
+  const RecipeModal = ({ itemName, onClose }) => {
+    const item = menuItems[itemName];
+    if (!item) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-orange-500">
+          {/* Header */}
+          <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-6 h-6 text-orange-500" />
+              <h2 className="text-2xl font-bold text-white">{item.name}</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700 rounded-lg transition"
+            >
+              <X className="w-6 h-6 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Basic Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <p className="text-gray-400 text-sm">Prep Time</p>
+                <p className="text-2xl font-bold text-white">{item.prepTime || 0} min</p>
+              </div>
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <p className="text-gray-400 text-sm">Cook Time</p>
+                <p className="text-2xl font-bold text-white">{item.cookTime || 0} min</p>
+              </div>
+            </div>
+
+            {/* Description */}
+            {item.description && (
+              <div>
+                <p className="text-gray-400 text-sm mb-2">Description</p>
+                <p className="text-white">{item.description}</p>
+              </div>
+            )}
+
+            {/* Allergens */}
+            {item.allergens && item.allergens.length > 0 && (
+              <div className="bg-red-900/30 border border-red-700 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <p className="text-red-200 font-semibold">Allergens</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {item.allergens.map((allergen, idx) => (
+                    <span key={idx} className="bg-red-700 text-red-100 px-3 py-1 rounded-full text-sm">
+                      {allergen}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cooking Steps */}
+            {item.components && item.components.length > 0 && (
+              <div>
+                <h3 className="text-lg font-bold text-white mb-4">Cooking Steps</h3>
+                <div className="space-y-3">
+                  {item.components.map((step, idx) => (
+                    <div key={idx} className="bg-gray-700 rounded-lg p-4 border-l-4 border-orange-500">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="text-white font-semibold">Step {idx + 1}: {step.step}</p>
+                          <p className="text-gray-300 text-sm mt-1">{step.step}</p>
+                        </div>
+                        <span className="bg-orange-600 text-white px-3 py-1 rounded text-sm font-semibold whitespace-nowrap ml-2">
+                          {step.station}
+                        </span>
+                      </div>
+                      {step.duration && (
+                        <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                          <Clock className="w-4 h-4" />
+                          <span>{step.duration} min</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Total Time */}
+            <div className="bg-green-900/30 border border-green-700 rounded-lg p-4">
+              <p className="text-green-200 text-sm mb-1">Total Cooking Time</p>
+              <p className="text-3xl font-bold text-green-400">
+                {(item.prepTime || 0) + (item.cookTime || 0)} minutes
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading kitchen orders...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading kitchen orders...</p>
         </div>
       </div>
     );
@@ -110,6 +252,31 @@ const KitchenScreenPage = () => {
           <div className="text-right">
             <p className="text-gray-400 text-sm">Active Orders</p>
             <p className="text-3xl font-bold text-white">{orders.length}</p>
+          </div>
+        </div>
+
+        {/* Station Navigation */}
+        <div className="mb-8 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <div className="flex items-center gap-2 mb-3">
+            <Grid3x3 className="w-5 h-5 text-orange-500" />
+            <h2 className="text-lg font-bold text-white">Station Screens</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {stations.map((station) => (
+              <button
+                key={station}
+                onClick={() => navigate(`/kitchen/station/${station}`)}
+                className={`py-2 px-3 rounded-lg font-semibold text-white transition transform hover:scale-105 active:scale-95 ${stationColors[station]}`}
+              >
+                {station}
+              </button>
+            ))}
+            <button
+              onClick={() => navigate('/expo')}
+              className="py-2 px-3 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 transition transform hover:scale-105 active:scale-95"
+            >
+              Expo
+            </button>
           </div>
         </div>
 
@@ -149,6 +316,39 @@ const KitchenScreenPage = () => {
                   </div>
                 </div>
 
+                {/* Guest Info */}
+                {order.guestName && (
+                  <div className="mb-4 p-3 bg-blue-900/30 border border-blue-700 rounded">
+                    <div className="flex items-center gap-2 text-blue-200">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm">
+                        <strong>{order.guestName}</strong> ({order.guestCount} guests)
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Allergies */}
+                {order.allergies && (
+                  <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-red-200 text-xs font-semibold">Allergies</p>
+                        <p className="text-red-100 text-sm">{order.allergies}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Instructions */}
+                {order.specialInstructions && (
+                  <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded">
+                    <p className="text-yellow-200 text-xs font-semibold mb-1">Special Instructions</p>
+                    <p className="text-yellow-100 text-sm">{order.specialInstructions}</p>
+                  </div>
+                )}
+
                 {/* Items */}
                 <div className="space-y-3">
                   {order.items?.map((item, idx) => (
@@ -156,8 +356,9 @@ const KitchenScreenPage = () => {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <p className="text-white font-semibold">{item.name}</p>
-                          {item.notes && (
-                            <p className="text-gray-300 text-sm mt-1">Note: {item.notes}</p>
+                          <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
+                          {item.specialInstructions && (
+                            <p className="text-blue-300 text-xs mt-1">📝 {item.specialInstructions}</p>
                           )}
                         </div>
                         <span
@@ -185,15 +386,25 @@ const KitchenScreenPage = () => {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowRecipe(item.name);
+                          }}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded transition flex items-center justify-center gap-1"
+                        >
+                          <BookOpen className="w-3 h-3" />
+                          Recipe
+                        </button>
                         {item.status === 'pending' && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStartCooking(order.id, item.id);
                             }}
-                            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-semibold py-2 rounded transition"
+                            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold py-2 rounded transition"
                           >
-                            Start Cooking
+                            Start
                           </button>
                         )}
                         {item.status === 'cooking' && (
@@ -202,9 +413,9 @@ const KitchenScreenPage = () => {
                               e.stopPropagation();
                               handleBumpToExpo(order.id, item.id);
                             }}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded transition"
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded transition"
                           >
-                            Bump to Expo
+                            Bump
                           </button>
                         )}
                       </div>
@@ -215,6 +426,9 @@ const KitchenScreenPage = () => {
             ))}
           </div>
         )}
+
+        {/* Recipe Modal */}
+        {showRecipe && <RecipeModal itemName={showRecipe} onClose={() => setShowRecipe(null)} />}
       </div>
     </div>
   );
