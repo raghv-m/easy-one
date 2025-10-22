@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ChefHat, AlertCircle, CheckCircle, Flame, BookOpen, X, Users, AlertTriangle, Grid3x3 } from 'lucide-react';
+import { Clock, ChefHat, AlertCircle, CheckCircle, Flame, BookOpen, X, Users, AlertTriangle, Grid3x3, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ const KitchenScreenPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showRecipe, setShowRecipe] = useState(null);
   const [menuItems, setMenuItems] = useState({});
+  const [scrollPosition, setScrollPosition] = useState(0);
   const token = useAuthStore((state) => state.token);
 
   const stations = ['Grill', 'Fryer', 'Prep', 'Sauté', 'Pastry', 'Plating', 'Final'];
@@ -101,16 +102,47 @@ const KitchenScreenPage = () => {
     }
   };
 
+  const handleRecallItem = async (orderId, itemId) => {
+    try {
+      await axios.post(
+        `${API_URL}/orders/${orderId}/items/${itemId}/recall`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchKitchenOrders();
+    } catch (err) {
+      console.error('Error recalling item:', err);
+      alert(err.response?.data?.error || 'Failed to recall item');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 text-red-800 border-red-300 border-l-4 border-l-red-600';
       case 'cooking':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300 border-l-4 border-l-yellow-600';
       case 'bumped':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 text-green-800 border-green-300 border-l-4 border-l-green-600';
+      case 'done':
+        return 'bg-blue-100 text-blue-800 border-blue-300 border-l-4 border-l-blue-600';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
+        return 'bg-gray-100 text-gray-800 border-gray-300 border-l-4 border-l-gray-600';
+    }
+  };
+
+  const getStatusBgColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-red-50';
+      case 'cooking':
+        return 'bg-yellow-50';
+      case 'bumped':
+        return 'bg-green-50';
+      case 'done':
+        return 'bg-blue-50';
+      default:
+        return 'bg-gray-50';
     }
   };
 
@@ -121,6 +153,8 @@ const KitchenScreenPage = () => {
       case 'cooking':
         return <Flame className="w-4 h-4" />;
       case 'bumped':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'done':
         return <CheckCircle className="w-4 h-4" />;
       default:
         return null;
@@ -288,6 +322,32 @@ const KitchenScreenPage = () => {
           </div>
         )}
 
+        {/* Scroll Controls */}
+        {orders.length > 0 && (
+          <div className="mb-4 flex gap-2 justify-center">
+            <button
+              onClick={() => {
+                const container = document.getElementById('orders-container');
+                if (container) container.scrollLeft -= 300;
+              }}
+              className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+              title="Scroll Left"
+            >
+              <ChevronUp className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                const container = document.getElementById('orders-container');
+                if (container) container.scrollLeft += 300;
+              }}
+              className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+              title="Scroll Right"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Orders Grid */}
         {orders.length === 0 ? (
           <div className="text-center py-16">
@@ -295,7 +355,7 @@ const KitchenScreenPage = () => {
             <p className="text-gray-400 text-lg">No active orders</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div id="orders-container" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-x-auto pb-4">
             {orders.map((order) => (
               <div
                 key={order.id}
@@ -352,46 +412,44 @@ const KitchenScreenPage = () => {
                 {/* Items */}
                 <div className="space-y-3">
                   {order.items?.map((item, idx) => (
-                    <div key={idx} className="bg-gray-700 rounded p-3">
+                    <div key={idx} className={`rounded p-3 border-2 ${getStatusBgColor(item.status)} ${getStatusColor(item.status)}`}>
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <p className="text-white font-semibold">{item.name}</p>
-                          <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
+                          <p className="text-gray-300 text-xs">Qty: {item.quantity}</p>
                           {item.specialInstructions && (
                             <p className="text-blue-300 text-xs mt-1">📝 {item.specialInstructions}</p>
                           )}
                         </div>
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold border ${getStatusColor(
-                            item.status
-                          )}`}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ml-2`}
                         >
                           {getStatusIcon(item.status)}
-                          {item.status}
+                          {item.status.toUpperCase()}
                         </span>
                       </div>
 
                       {/* Cooking Timer */}
                       {item.status === 'cooking' && item.cookingStartedAt && (
-                        <div className="flex items-center gap-2 text-yellow-400 text-sm mb-2">
+                        <div className="flex items-center gap-2 text-yellow-600 text-sm mb-2 font-semibold">
                           <Clock className="w-4 h-4" />
                           <span>
                             {Math.floor(
                               (new Date() - new Date(item.cookingStartedAt)) / 1000 / 60
                             )}{' '}
-                            min
+                            min cooking
                           </span>
                         </div>
                       )}
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex gap-2 mt-3 flex-wrap">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setShowRecipe(item.name);
                           }}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded transition flex items-center justify-center gap-1"
+                          className="flex-1 min-w-[80px] bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded transition flex items-center justify-center gap-1"
                         >
                           <BookOpen className="w-3 h-3" />
                           Recipe
@@ -402,21 +460,33 @@ const KitchenScreenPage = () => {
                               e.stopPropagation();
                               handleStartCooking(order.id, item.id);
                             }}
-                            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold py-2 rounded transition"
+                            className="flex-1 min-w-[80px] bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold py-2 rounded transition"
                           >
-                            Start
+                            🔥 Cook
                           </button>
                         )}
                         {item.status === 'cooking' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBumpToExpo(order.id, item.id);
-                            }}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded transition"
-                          >
-                            Bump
-                          </button>
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBumpToExpo(order.id, item.id);
+                              }}
+                              className="flex-1 min-w-[80px] bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded transition"
+                            >
+                              ✓ Fire
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRecallItem(order.id, item.id);
+                              }}
+                              className="flex-1 min-w-[80px] bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2 rounded transition flex items-center justify-center gap-1"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Recall
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>

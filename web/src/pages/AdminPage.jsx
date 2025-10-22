@@ -39,6 +39,18 @@ const AdminPage = () => {
     location: '',
   });
 
+  const [menuItems, setMenuItems] = useState([]);
+  const [showMenuForm, setShowMenuForm] = useState(false);
+  const [editingMenu, setEditingMenu] = useState(null);
+  const [menuForm, setMenuForm] = useState({
+    name: '',
+    price: '',
+    category: '',
+    description: '',
+    prepTime: '',
+    cookTime: '',
+  });
+
   const tabs = [
     { id: 'employees', label: 'Employees', icon: Users },
     { id: 'tables', label: 'Tables', icon: Table2 },
@@ -52,7 +64,7 @@ const AdminPage = () => {
     } else if (activeTab === 'tables') {
       fetchTables();
     } else if (activeTab === 'menu') {
-      navigate('/menu-items');
+      fetchMenuItems();
     }
   }, [activeTab]);
 
@@ -83,6 +95,22 @@ const AdminPage = () => {
     } catch (err) {
       console.error('Error fetching tables:', err);
       setError('Failed to load tables');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/menus`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMenuItems(response.data.menus || []);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching menu items:', err);
+      setError('Failed to load menu items');
     } finally {
       setLoading(false);
     }
@@ -177,6 +205,81 @@ const AdminPage = () => {
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete table');
+    }
+  };
+
+  const handleAddMenu = async (e) => {
+    e.preventDefault();
+    if (!menuForm.name || !menuForm.price || !menuForm.category) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const payload = {
+        ...menuForm,
+        price: parseFloat(menuForm.price),
+        prepTime: parseInt(menuForm.prepTime) || 0,
+        cookTime: parseInt(menuForm.cookTime) || 0,
+      };
+
+      if (editingMenu) {
+        await axios.put(`${API_URL}/menus/${editingMenu.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccess('Menu item updated successfully!');
+      } else {
+        await axios.post(`${API_URL}/menus`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccess('Menu item added successfully!');
+      }
+
+      setMenuForm({
+        name: '',
+        price: '',
+        category: '',
+        description: '',
+        prepTime: '',
+        cookTime: '',
+      });
+      setEditingMenu(null);
+      setShowMenuForm(false);
+      fetchMenuItems();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save menu item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditMenu = (item) => {
+    setEditingMenu(item);
+    setMenuForm({
+      name: item.name,
+      price: item.price,
+      category: item.category,
+      description: item.description || '',
+      prepTime: item.prepTime || '',
+      cookTime: item.cookTime || '',
+    });
+    setShowMenuForm(true);
+  };
+
+  const handleDeleteMenu = async (menuId) => {
+    if (!window.confirm('Are you sure you want to delete this menu item?')) return;
+
+    try {
+      await axios.delete(`${API_URL}/menus/${menuId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuccess('Menu item deleted successfully');
+      fetchMenuItems();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete menu item');
     }
   };
 
@@ -521,6 +624,180 @@ const AdminPage = () => {
                         }`}>
                           {table.status}
                         </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MENU TAB */}
+          {activeTab === 'menu' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Manage Menu Items</h2>
+                <button
+                  onClick={() => {
+                    setShowMenuForm(!showMenuForm);
+                    setEditingMenu(null);
+                    setMenuForm({
+                      name: '',
+                      price: '',
+                      category: '',
+                      description: '',
+                      prepTime: '',
+                      cookTime: '',
+                    });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Menu Item
+                </button>
+              </div>
+
+              {/* Menu Form */}
+              {showMenuForm && (
+                <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <form onSubmit={handleAddMenu} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                        <input
+                          type="text"
+                          value={menuForm.name}
+                          onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Butter Chicken"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={menuForm.price}
+                          onChange={(e) => setMenuForm({ ...menuForm, price: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                        <input
+                          type="text"
+                          value={menuForm.category}
+                          onChange={(e) => setMenuForm({ ...menuForm, category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., Main Course"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={menuForm.description}
+                          onChange={(e) => setMenuForm({ ...menuForm, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Item description"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Prep Time (min)</label>
+                        <input
+                          type="number"
+                          value={menuForm.prepTime}
+                          onChange={(e) => setMenuForm({ ...menuForm, prepTime: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Cook Time (min)</label>
+                        <input
+                          type="number"
+                          value={menuForm.cookTime}
+                          onChange={(e) => setMenuForm({ ...menuForm, cookTime: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
+                      >
+                        {loading ? 'Saving...' : editingMenu ? 'Update Item' : 'Add Item'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMenuForm(false);
+                          setEditingMenu(null);
+                          setMenuForm({
+                            name: '',
+                            price: '',
+                            category: '',
+                            description: '',
+                            prepTime: '',
+                            cookTime: '',
+                          });
+                        }}
+                        className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Menu Items Grid */}
+              {loading && !showMenuForm ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                </div>
+              ) : menuItems.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">No menu items yet. Add your first item to get started.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {menuItems.map((item) => (
+                    <div key={item.id} className="p-4 border border-gray-200 rounded-lg hover:shadow-lg transition">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">{item.name}</h3>
+                          <p className="text-sm text-gray-600">{item.category}</p>
+                        </div>
+                        <p className="text-xl font-bold text-green-600">₹{item.price}</p>
+                      </div>
+
+                      {item.description && (
+                        <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                      )}
+
+                      <div className="flex gap-2 text-xs text-gray-500 mb-4">
+                        {item.prepTime > 0 && <span>⏱️ Prep: {item.prepTime}min</span>}
+                        {item.cookTime > 0 && <span>🔥 Cook: {item.cookTime}min</span>}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditMenu(item)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition text-sm"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMenu(item.id)}
+                          className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition text-sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
