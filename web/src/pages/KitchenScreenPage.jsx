@@ -29,10 +29,15 @@ const KitchenScreenPage = () => {
   };
 
   useEffect(() => {
+    if (!token) {
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
     fetchData();
     const interval = setInterval(fetchKitchenOrders, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
   const fetchData = async () => {
     try {
