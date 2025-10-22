@@ -4,14 +4,14 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  Swap2,
+  ArrowRightLeft,
   Trash2,
   Plus,
   ChevronLeft,
   ChevronRight,
   Download,
   Share2,
-  Google,
+  Globe,
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
@@ -194,7 +194,7 @@ export default function EmployeeSchedulePage() {
               onClick={handleSyncGoogle}
               className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition"
             >
-              <Google size={18} />
+              <Globe size={18} />
               Sync Google
             </button>
             <button

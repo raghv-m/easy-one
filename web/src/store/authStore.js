@@ -76,10 +76,21 @@ export const useAuthStore = create((set) => ({
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await axios.get(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        set({ user: response.data.user, token, loading: false });
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        try {
+          const response = await axios.get(`${API_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          set({ user: response.data.user, token, loading: false });
+        } catch (err) {
+          clearTimeout(timeoutId);
+          throw err;
+        }
       } else {
         set({ loading: false });
       }

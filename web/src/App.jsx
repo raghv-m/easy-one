@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { initializeFirebase } from './config/firebase';
 
@@ -28,10 +28,14 @@ import BillGenerationPage from './pages/BillGenerationPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const { user, loading, checkAuth } = useAuthStore();
+  const { loading, checkAuth } = useAuthStore();
 
   useEffect(() => {
-    initializeFirebase();
+    try {
+      initializeFirebase();
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+    }
     checkAuth();
   }, [checkAuth]);
 
