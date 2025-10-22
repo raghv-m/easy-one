@@ -23,18 +23,14 @@ const LandingPage = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    alert('Login functionality will be connected to your app!');
     setShowLoginModal(false);
+    navigate('/login');
   };
 
   const handleSignup = (e) => {
     e.preventDefault();
-    if (signupData.password !== signupData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    alert('Signup successful! Check your email to verify.');
     setShowSignupModal(false);
+    navigate('/signup');
   };
 
   const handleForgotPassword = (e) => {
