@@ -40,6 +40,8 @@ dist/
 # Firebase
 .firebase/
 .firebaserc
+firebase-key.json
+backend/src/config/firebase-key.json
 
 # OS
 Thumbs.db
