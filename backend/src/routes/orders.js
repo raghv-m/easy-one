@@ -36,15 +36,18 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Group items by category for routing
     const itemsByCategory = {};
-    items.forEach(item => {
+    const itemsWithIds = items.map((item, idx) => ({
+      ...item,
+      id: item.id || `${orderId}-item-${idx}`, // Generate ID if not provided
+      status: 'pending',
+      createdAt: now,
+    }));
+
+    itemsWithIds.forEach(item => {
       if (!itemsByCategory[item.category]) {
         itemsByCategory[item.category] = [];
       }
-      itemsByCategory[item.category].push({
-        ...item,
-        status: 'pending',
-        createdAt: now,
-      });
+      itemsByCategory[item.category].push(item);
     });
 
     // Calculate total
@@ -56,7 +59,7 @@ router.post('/', authMiddleware, async (req, res) => {
       tableNumber: tableNumber || 'Unknown',
       guestName: guestName || 'Guest',
       guestCount: guestCount || 1,
-      items,
+      items: itemsWithIds,
       itemsByCategory,
       discountAmount: discountAmount || 0,
       notes: notes || '',
