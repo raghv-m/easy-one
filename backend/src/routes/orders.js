@@ -340,6 +340,60 @@ router.post('/:orderId/items/:itemId/bump', authMiddleware, requireRole(['Kitche
   }
 });
 
+// Recall item (bring back from expo/bumped status)
+router.post('/:orderId/items/:itemId/recall', authMiddleware, async (req, res) => {
+  try {
+    const { orgId } = req.user;
+    const { orderId, itemId } = req.params;
+
+    const orderRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('orders')
+      .doc(orderId);
+
+    const orderDoc = await orderRef.get();
+    if (!orderDoc.exists) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orderDoc.data();
+    const updatedItems = order.items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          status: 'cooking', // Bring back to cooking status
+          recalledAt: new Date(),
+        };
+      }
+      return item;
+    });
+
+    await orderRef.update({
+      items: updatedItems,
+      updatedAt: new Date(),
+    });
+
+    // Remove from expo screen if it exists there
+    const expoSnapshot = await getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('expoScreen')
+      .where('itemId', '==', itemId)
+      .where('orderId', '==', orderId)
+      .get();
+
+    for (const doc of expoSnapshot.docs) {
+      await doc.ref.delete();
+    }
+
+    res.json({ message: 'Item recalled' });
+  } catch (error) {
+    console.error('Recall item error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Serve order (mark as complete)
 router.post('/:orderId/serve', authMiddleware, requireRole(['Front Staff', 'Manager']), async (req, res) => {
   try {
@@ -462,13 +516,18 @@ router.get('/kitchen/screen', authMiddleware, requireRole(['Kitchen Staff', 'Man
       .doc(orgId)
       .collection('orders')
       .where('status', '==', 'active')
-      .orderBy('createdAt', 'asc')
       .get();
 
-    const orders = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const orders = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .sort((a, b) => {
+        const timeA = a.createdAt?._seconds || new Date(a.createdAt).getTime() / 1000;
+        const timeB = b.createdAt?._seconds || new Date(b.createdAt).getTime() / 1000;
+        return timeA - timeB;
+      });
 
     res.json({ orders });
   } catch (error) {
@@ -486,13 +545,18 @@ router.get('/expo/screen', authMiddleware, requireRole(['Front Staff', 'Manager'
       .collection('organizations')
       .doc(orgId)
       .collection('expoScreen')
-      .orderBy('bumpedAt', 'asc')
       .get();
 
-    const items = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const items = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .sort((a, b) => {
+        const timeA = a.bumpedAt?._seconds || new Date(a.bumpedAt).getTime() / 1000;
+        const timeB = b.bumpedAt?._seconds || new Date(b.bumpedAt).getTime() / 1000;
+        return timeA - timeB;
+      });
 
     res.json({ items });
   } catch (error) {

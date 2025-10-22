@@ -90,9 +90,10 @@ const KitchenScreenPage = () => {
 
   const handleBumpToExpo = async (orderId, itemId) => {
     try {
+      // Use the fire endpoint to mark as ready/bumped
       await axios.post(
-        `${API_URL}/orders/${orderId}/items/${itemId}/bump`,
-        {},
+        `${API_URL}/orders/${orderId}/items/${itemId}/fire`,
+        { station: 'Kitchen' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchKitchenOrders();
