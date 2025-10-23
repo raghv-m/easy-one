@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ChefHat, AlertCircle, CheckCircle, Flame, BookOpen, X, Users, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ChefHat, AlertCircle, CheckCircle, Flame, BookOpen, X, Users, AlertTriangle, ArrowRight, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -116,6 +116,19 @@ const StationScreenPage = () => {
     }
   };
 
+  const handleRecallItem = async (orderId, itemId) => {
+    try {
+      await axios.post(
+        `${API_URL}/orders/${orderId}/items/${itemId}/recall`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchStationOrders();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to recall item');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -151,28 +164,24 @@ const StationScreenPage = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${stationColors[station]} p-4`}>
+    <div className={`min-h-screen bg-gradient-to-br ${stationColors[station]} p-8`}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        {/* Header - Large, High Contrast */}
+        <div className="flex items-center justify-between mb-8 bg-black/40 p-6 rounded-lg border-4 border-white/30">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => navigate('/kitchen')}
-              className="p-2 hover:bg-white/20 rounded-lg transition text-white"
+              className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg transition text-white text-xl font-bold"
             >
               ← Back
             </button>
-            <div className="flex items-center gap-3">
-              <Flame className="w-10 h-10 text-white" />
+            <div className="flex items-center gap-4">
+              <Flame className="w-16 h-16 text-white" />
               <div>
-                <h1 className="text-4xl font-bold text-white">{station} Station</h1>
-                <p className="text-white/80 text-sm">Active Orders: {orders.length}</p>
+                <h1 className="text-5xl font-bold text-white">{station.toUpperCase()} STATION</h1>
+                <p className="text-white/90 text-2xl mt-2">Active Orders: <span className="font-bold text-3xl">{orders.length}</span></p>
               </div>
             </div>
-          </div>
-          <div className="text-right text-white">
-            <p className="text-sm opacity-80">Station Screen</p>
-            <p className="text-2xl font-bold">{orders.length}</p>
           </div>
         </div>
 
@@ -186,82 +195,93 @@ const StationScreenPage = () => {
 
         {/* Orders Grid */}
         {orders.length === 0 ? (
-          <div className="text-center py-16">
-            <ChefHat className="w-16 h-16 text-white/30 mx-auto mb-4" />
-            <p className="text-white/60 text-lg">No orders for {station} station</p>
+          <div className="text-center py-20">
+            <ChefHat className="w-24 h-24 text-white/30 mx-auto mb-6" />
+            <p className="text-white/70 text-3xl font-bold">No orders for {station} station</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white/10 backdrop-blur border-2 border-white/20 rounded-lg p-4 hover:border-white/40 transition cursor-pointer"
+                className="bg-white/10 backdrop-blur border-4 border-white/30 rounded-lg p-6 hover:border-white/60 transition cursor-pointer shadow-2xl"
                 onClick={() => setSelectedOrder(order.id === selectedOrder ? null : order.id)}
               >
                 {/* Order Header */}
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/20">
+                <div className="flex items-center justify-between mb-6 pb-6 border-b-2 border-white/30">
                   <div>
-                    <p className="text-white/70 text-sm">Table</p>
-                    <p className="text-2xl font-bold text-white">{order.tableNumber}</p>
+                    <p className="text-white/70 text-lg">TABLE</p>
+                    <p className="text-5xl font-bold text-white">{order.tableNumber}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-white/70 text-sm">Time</p>
-                    <p className="text-xl font-bold text-white">{getTimeElapsed(order.createdAt)}</p>
+                    <p className="text-white/70 text-lg">TIME</p>
+                    <p className="text-3xl font-bold text-white">{getTimeElapsed(order.createdAt)}</p>
                   </div>
                 </div>
 
                 {/* Items for this station */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {order.items?.map((item, idx) => {
                     const menuItem = menuItems[item.name];
                     const stationComponents = menuItem?.components?.filter(c => c.station === station) || [];
-                    
+
                     if (stationComponents.length === 0) return null;
 
                     return (
-                      <div key={idx} className="bg-white/5 rounded-lg p-3 border border-white/10">
-                        <div className="flex justify-between items-start mb-2">
+                      <div key={idx} className="bg-white/10 rounded-lg p-4 border-2 border-white/20">
+                        <div className="flex justify-between items-start mb-4">
                           <div>
-                            <p className="font-semibold text-white">{item.name}</p>
-                            <p className="text-xs text-white/60">Qty: {item.quantity}</p>
+                            <p className="font-bold text-white text-2xl">{item.name}</p>
+                            <p className="text-lg text-white/70">Qty: {item.quantity}</p>
                           </div>
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(item.status)}`}>
-                            {item.status || 'pending'}
+                          <span className={`px-4 py-2 rounded-lg text-lg font-bold ${getStatusColor(item.status)}`}>
+                            {(item.status || 'pending').toUpperCase()}
                           </span>
                         </div>
 
                         {/* Station Steps */}
-                        <div className="mb-3 space-y-1">
+                        <div className="mb-4 space-y-2 bg-black/30 p-3 rounded-lg">
                           {stationComponents.map((comp, cidx) => (
-                            <p key={cidx} className="text-xs text-white/70">
-                              • {comp.step} ({comp.duration}m)
+                            <p key={cidx} className="text-lg text-white/80">
+                              <span className="font-bold">Step {cidx + 1}:</span> {comp.step} <span className="text-white/60">({comp.duration}m)</span>
                             </p>
                           ))}
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
+                        {/* Action Buttons - Large, Touch-Friendly */}
+                        <div className="flex gap-3 flex-wrap">
                           {item.status === 'pending' && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStartCooking(order.id, item.id);
                               }}
-                              className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded text-xs font-semibold transition"
+                              className="flex-1 min-w-[120px] bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-lg text-lg font-bold transition"
                             >
-                              Start
+                              START
                             </button>
                           )}
                           {item.status === 'cooking' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFireItem(order.id, item.id);
-                              }}
-                              className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-xs font-semibold transition flex items-center justify-center gap-1"
-                            >
-                              <Flame className="w-3 h-3" /> Fire
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleFireItem(order.id, item.id);
+                                }}
+                                className="flex-1 min-w-[120px] bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg text-lg font-bold transition flex items-center justify-center gap-2"
+                              >
+                                <Flame className="w-6 h-6" /> FIRE
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRecallItem(order.id, item.id);
+                                }}
+                                className="flex-1 min-w-[120px] bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg text-lg font-bold transition flex items-center justify-center gap-2"
+                              >
+                                <RotateCcw className="w-6 h-6" /> RECALL
+                              </button>
+                            </>
                           )}
                           {item.status === 'fired' && (
                             <button
@@ -269,9 +289,9 @@ const StationScreenPage = () => {
                                 e.stopPropagation();
                                 handleBumpToNext(order.id, item.id);
                               }}
-                              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-xs font-semibold transition flex items-center justify-center gap-1"
+                              className="flex-1 min-w-[120px] bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg text-lg font-bold transition flex items-center justify-center gap-2"
                             >
-                              <ArrowRight className="w-3 h-3" /> {station === 'Final' ? 'To Expo' : 'To Final'}
+                              <ArrowRight className="w-6 h-6" /> {station === 'Final' ? 'TO EXPO' : 'TO FINAL'}
                             </button>
                           )}
                         </div>
@@ -282,17 +302,17 @@ const StationScreenPage = () => {
 
                 {/* Special Instructions */}
                 {order.specialInstructions && (
-                  <div className="mt-3 p-2 bg-yellow-500/20 border border-yellow-500/50 rounded text-xs text-yellow-100">
-                    <p className="font-semibold mb-1">Special Instructions:</p>
-                    <p>{order.specialInstructions}</p>
+                  <div className="mt-4 p-4 bg-yellow-500/30 border-2 border-yellow-400 rounded-lg text-lg text-yellow-100">
+                    <p className="font-bold mb-2">📝 SPECIAL INSTRUCTIONS:</p>
+                    <p className="text-xl">{order.specialInstructions}</p>
                   </div>
                 )}
 
                 {/* Allergies */}
                 {order.allergies && (
-                  <div className="mt-2 p-2 bg-red-500/20 border border-red-500/50 rounded text-xs text-red-100">
-                    <p className="font-semibold mb-1">⚠️ Allergies:</p>
-                    <p>{order.allergies}</p>
+                  <div className="mt-4 p-4 bg-red-500/30 border-2 border-red-400 rounded-lg text-lg text-red-100">
+                    <p className="font-bold mb-2">⚠️ ALLERGIES:</p>
+                    <p className="text-xl">{order.allergies}</p>
                   </div>
                 )}
               </div>
