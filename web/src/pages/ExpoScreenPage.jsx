@@ -1,23 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, CheckCircle, AlertCircle, Clock, BookOpen, ChevronUp, ChevronDown, RotateCcw, Flame } from 'lucide-react';
+import { Utensils, CheckCircle, AlertCircle, Clock, BookOpen, X, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const ExpoScreenPage = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showRecipe, setShowRecipe] = useState(null);
   const [menuItems, setMenuItems] = useState({});
+  const [newItemAlert, setNewItemAlert] = useState(false);
   const token = useAuthStore((state) => state.token);
 
   useEffect(() => {
+    if (!token) {
+      setError('Not authenticated');
+      setLoading(false);
+      return;
+    }
     fetchData();
-    const interval = setInterval(fetchExpoItems, 3000); // Refresh every 3 seconds
+    const interval = setInterval(fetchExpoItems, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [token]);
 
   const fetchData = async () => {
     try {
@@ -29,9 +37,7 @@ const ExpoScreenPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
-      setItems(itemsRes.data.items);
-
-      // Create menu items map for quick lookup
+      setItems(itemsRes.data.items || []);
       const itemsMap = {};
       (menusRes.data.menus || menusRes.data.items || []).forEach(item => {
         itemsMap[item.name] = item;
@@ -51,22 +57,26 @@ const ExpoScreenPage = () => {
       const response = await axios.get(`${API_URL}/orders/expo/screen`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setItems(response.data.items);
+      const newItems = response.data.items || [];
+      if (newItems.length > items.length) {
+        setNewItemAlert(true);
+        setTimeout(() => setNewItemAlert(false), 3000);
+      }
+      setItems(newItems);
       setError('');
     } catch (err) {
       console.error('Error fetching expo items:', err);
-      setError('Failed to load items');
     }
   };
 
-  const handleServeOrder = async (orderId) => {
+  const handleServeOrder = async (orderId, itemId) => {
     try {
       await axios.post(
-        `${API_URL}/orders/${orderId}/serve`,
+        `${API_URL}/orders/${orderId}/items/${itemId}/serve`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchExpoItems();
+      await fetchExpoItems();
     } catch (err) {
       console.error('Error serving order:', err);
       alert(err.response?.data?.error || 'Failed to serve order');
@@ -80,203 +90,165 @@ const ExpoScreenPage = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchExpoItems();
+      await fetchExpoItems();
     } catch (err) {
       console.error('Error recalling item:', err);
       alert(err.response?.data?.error || 'Failed to recall item');
     }
   };
 
-  const getItemStatus = (item) => {
-    // Determine if item is cooking, done, or ready
-    if (item.status === 'bumped' || item.status === 'ready') {
-      return 'ready';
-    }
-    return item.status || 'ready';
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'cooking':
-        return 'border-l-4 border-l-yellow-600 bg-yellow-50';
-      case 'ready':
-        return 'border-l-4 border-l-green-600 bg-green-50';
-      case 'done':
-        return 'border-l-4 border-l-blue-600 bg-blue-50';
-      default:
-        return 'border-l-4 border-l-gray-600 bg-gray-50';
-    }
-  };
-
-  // Recipe Modal Component
-  const RecipeModal = ({ itemName, onClose }) => {
-    const item = menuItems[itemName];
-    if (!item) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-green-500">
-          {/* Header */}
-          <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <BookOpen className="w-6 h-6 text-green-500" />
-              <h2 className="text-2xl font-bold text-white">{item.name}</h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-700 rounded-lg transition"
-            >
-              <AlertCircle className="w-6 h-6 text-gray-400" />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 space-y-4">
-            {item.description && (
-              <div>
-                <p className="text-gray-400 text-sm mb-2">Description</p>
-                <p className="text-white">{item.description}</p>
-              </div>
-            )}
-
-            {item.components && item.components.length > 0 && (
-              <div>
-                <h3 className="text-lg font-bold text-white mb-3">Cooking Steps</h3>
-                <div className="space-y-2">
-                  {item.components.map((step, idx) => (
-                    <div key={idx} className="bg-gray-700 rounded p-3 border-l-4 border-green-500">
-                      <p className="text-white font-semibold">Step {idx + 1}: {step.step}</p>
-                      <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-semibold">
-                        {step.station}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="flex items-center justify-center h-screen bg-green-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading expo items...</p>
+          <Utensils className="w-20 h-20 text-white mx-auto mb-4 animate-bounce" />
+          <p className="text-white text-3xl font-bold">Loading Expo Screen...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 to-emerald-900 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Utensils className="w-8 h-8 text-green-400" />
-            <h1 className="text-4xl font-bold text-white">Expo Screen</h1>
-          </div>
-          <div className="text-right">
-            <p className="text-gray-300 text-sm">Ready Items</p>
-            <p className="text-3xl font-bold text-green-400">{items.length}</p>
+    <div className="min-h-screen bg-green-900 text-white">
+      {/* Header - Large, High Contrast */}
+      <header className="bg-green-950 border-b-4 border-green-400 sticky top-0 z-50 shadow-2xl">
+        <div className="max-w-full px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Utensils className="w-12 h-12 text-green-400" />
+              <div>
+                <h1 className="text-5xl font-bold text-white">EXPO SCREEN</h1>
+                <p className="text-2xl text-green-300 mt-2">Ready Items: <span className="text-green-400 font-bold text-3xl">{items.length}</span></p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-8 py-4 bg-green-700 hover:bg-green-600 rounded-lg transition text-xl font-bold"
+            >
+              ← Dashboard
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/50 border border-red-400 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0 mt-0.5" />
-            <p className="text-red-100">{error}</p>
+      <main className="max-w-full px-8 py-8">
+        {/* New Item Alert */}
+        {newItemAlert && (
+          <div className="mb-8 p-6 bg-green-700 border-4 border-green-300 rounded-lg animate-pulse">
+            <p className="text-green-100 text-3xl font-bold">🔔 NEW ITEM READY!</p>
           </div>
         )}
 
-        {/* Items Grid */}
+        {error && (
+          <div className="mb-8 p-6 bg-red-900 border-4 border-red-500 rounded-lg flex items-start gap-4">
+            <AlertCircle className="w-10 h-10 text-red-300 flex-shrink-0 mt-1" />
+            <p className="text-red-100 text-2xl font-semibold">{error}</p>
+          </div>
+        )}
+
+        {/* Items Grid - Large Cards */}
         {items.length === 0 ? (
-          <div className="text-center py-16">
-            <CheckCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-300 text-lg">No items ready for pickup</p>
+          <div className="text-center py-20">
+            <Utensils className="w-24 h-24 text-green-700 mx-auto mb-6" />
+            <p className="text-green-300 text-3xl font-bold">No items ready for serving</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => {
-              const status = getItemStatus(item);
-              return (
-                <div
-                  key={item.id}
-                  className={`bg-gray-800 rounded-lg shadow-lg p-6 ${getStatusColor(status)} hover:shadow-xl transition border-2 border-gray-700`}
-                >
-                  {/* Item Header */}
-                  <div className="mb-4 pb-4 border-b border-gray-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-gray-300 text-sm font-semibold">TABLE</p>
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
-                        status === 'ready' ? 'bg-green-600 text-white' :
-                        status === 'cooking' ? 'bg-yellow-600 text-white' :
-                        'bg-blue-600 text-white'
-                      }`}>
-                        {status === 'ready' && <CheckCircle className="w-4 h-4" />}
-                        {status === 'cooking' && <Flame className="w-4 h-4" />}
-                        {status.toUpperCase()}
-                      </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-green-800 border-4 border-green-600 rounded-lg p-6 hover:border-green-300 transition cursor-pointer shadow-lg"
+              >
+                {/* Item Header */}
+                <div className="flex items-center justify-between mb-6 pb-6 border-b-2 border-green-600">
+                  <div>
+                    <p className="text-green-300 text-lg">TABLE</p>
+                    <p className="text-5xl font-bold text-white">{item.tableId || item.table}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-300 text-lg">Status</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <CheckCircle className="w-8 h-8 text-green-400" />
+                      <span className="text-2xl font-bold text-green-400">READY</span>
                     </div>
-                    <p className="text-4xl font-bold text-white">{item.orderId?.slice(-2)}</p>
-                  </div>
-
-                  {/* Item Details */}
-                  <div className="bg-gray-700 rounded p-4 mb-4">
-                    <p className="text-gray-300 text-sm mb-1">Item</p>
-                    <p className="text-lg font-semibold text-white">{item.item?.name}</p>
-                    {item.item?.notes && (
-                      <p className="text-gray-300 text-sm mt-2">📝 {item.item.notes}</p>
-                    )}
-                  </div>
-
-                  {/* Time Ready */}
-                  <div className="flex items-center gap-2 text-gray-300 text-sm mb-4">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      Ready at {new Date(item.bumpedAt).toLocaleTimeString()}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowRecipe(item.item?.name)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-1"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      Recipe
-                    </button>
-                    <button
-                      onClick={() => handleServeOrder(item.orderId)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition"
-                    >
-                      ✓ Serve
-                    </button>
-                    {status === 'cooking' && (
-                      <button
-                        onClick={() => handleRecallItem(item.orderId, item.id)}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-1"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Recall
-                      </button>
-                    )}
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Item Details */}
+                <div className="mb-6 p-4 bg-green-700/40 border-2 border-green-600 rounded-lg">
+                  <p className="text-3xl font-bold text-white mb-2">{item.name}</p>
+                  <p className="text-xl text-green-200">Qty: {item.quantity || 1}</p>
+                  {item.specialInstructions && (
+                    <p className="text-lg text-green-100 mt-3 bg-black/30 p-2 rounded">
+                      📝 {item.specialInstructions}
+                    </p>
+                  )}
+                </div>
+
+                {/* Ready Time */}
+                <div className="mb-6 p-4 bg-green-700/40 border-2 border-green-600 rounded-lg flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-green-300" />
+                  <div>
+                    <p className="text-green-300 text-sm">Ready at</p>
+                    <p className="text-2xl font-mono text-white">
+                      {item.readyAt ? new Date(item.readyAt).toLocaleTimeString() : 'Now'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons - Large, Touch-Friendly */}
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={() => setShowRecipe(item.name)}
+                    className="flex-1 min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                  >
+                    <BookOpen className="w-6 h-6" />
+                    Recipe
+                  </button>
+                  <button
+                    onClick={() => handleServeOrder(item.orderId, item.id)}
+                    className="flex-1 min-w-[120px] bg-green-600 hover:bg-green-700 text-white text-lg font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-6 h-6" />
+                    SERVE
+                  </button>
+                  <button
+                    onClick={() => handleRecallItem(item.orderId, item.id)}
+                    className="flex-1 min-w-[120px] bg-red-600 hover:bg-red-700 text-white text-lg font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-6 h-6" />
+                    RECALL
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+      </main>
 
-        {/* Recipe Modal */}
-        {showRecipe && <RecipeModal itemName={showRecipe} onClose={() => setShowRecipe(null)} />}
-      </div>
+      {/* Recipe Modal */}
+      {showRecipe && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-green-800 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-8 border-4 border-green-400">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-4xl font-bold text-white">{showRecipe}</h2>
+              <button
+                onClick={() => setShowRecipe(null)}
+                className="p-2 hover:bg-green-700 rounded-lg transition"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
+            <div className="text-green-100 text-xl">
+              {menuItems[showRecipe]?.recipe ? (
+                <p className="whitespace-pre-wrap">{menuItems[showRecipe].recipe}</p>
+              ) : (
+                <p>No recipe available</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
