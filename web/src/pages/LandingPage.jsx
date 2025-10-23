@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Menu, X, ChefHat, LogIn, UserPlus, Mail, Phone, MapPin, Linkedin, Instagram, Github, Star, Send, Eye, EyeOff } from 'lucide-react';
+import { Menu, X, ChefHat, LogIn, UserPlus, Mail, Phone, MapPin, Linkedin, Instagram, Github, Star, Send, Eye, EyeOff, Clock, TrendingUp, Users, Zap, BarChart3, CheckCircle, ArrowRight, Calendar, DollarSign, Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
@@ -79,7 +79,7 @@ const LandingPage = () => {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <ChefHat className="w-8 h-8 text-orange-600" />
-              <span className="text-xl font-bold text-gray-800">Restaurant Management App</span>
+              <span className="text-xl font-bold text-gray-800">DineSync Solutions</span>
             </div>
 
             {/* Desktop Menu */}
@@ -127,31 +127,45 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section id="home" className="pt-32 pb-20 bg-gradient-to-r from-orange-50 via-red-50 to-yellow-50">
+      <section id="home" className="pt-32 pb-20 bg-gradient-to-r from-blue-50 via-orange-50 to-red-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 animate-fade-in">
+              <div className="inline-block bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-semibold">
+                ✨ Proudly Built in Alberta
+              </div>
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900">
-                Revolutionize Your <span className="text-orange-600">Restaurant Operations</span>
+                Run Your Restaurant <span className="text-orange-600">Smarter</span>
               </h1>
               <p className="text-xl text-gray-600">
-                Tools for scheduling, inventory, and orders, built by a chef who knows the grind.
+                All-in-one software for scheduling, payroll, POS, kitchen screens, and more—designed to save time and boost profits.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button onClick={() => setShowSignupModal(true)} className="px-8 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition">
-                  Get Started
+                <button onClick={() => setShowSignupModal(true)} className="px-8 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition flex items-center justify-center gap-2">
+                  <span>Book a Free Demo</span>
+                  <ArrowRight className="w-5 h-5" />
                 </button>
                 <button onClick={() => scrollToSection('features')} className="px-8 py-3 border-2 border-orange-600 text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition">
-                  Learn More
+                  See How It Works
                 </button>
               </div>
+              <div className="flex items-center gap-4 pt-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span>30-day free trial</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span>No credit card needed</span>
+                </div>
+              </div>
             </div>
-            <div className="relative h-96 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg shadow-2xl overflow-hidden">
+            <div className="relative h-96 bg-gradient-to-br from-blue-500 to-orange-500 rounded-lg shadow-2xl overflow-hidden">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-white">
-                  <ChefHat className="w-24 h-24 mx-auto mb-4 opacity-80" />
-                  <p className="text-2xl font-bold">Bustling Kitchen</p>
-                  <p className="text-sm opacity-75">Professional Restaurant Operations</p>
+                  <Zap className="w-24 h-24 mx-auto mb-4 opacity-80" />
+                  <p className="text-2xl font-bold">Streamlined Operations</p>
+                  <p className="text-sm opacity-75">Real-time Kitchen Display System</p>
                 </div>
               </div>
             </div>
@@ -159,30 +173,99 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      {/* Problem-Solution Section */}
+      <section className="py-20 bg-gradient-to-r from-red-50 to-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-16 text-gray-900">What Our App Does</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Tired of Restaurant Chaos?</h2>
+          <p className="text-center text-gray-600 mb-12 text-lg">Common pain points solved by DineSync</p>
+          <div className="grid md:grid-cols-2 gap-8">
             {[
-              { title: 'Smart Scheduling', desc: 'Plan staff shifts and sync with calendars.' },
-              { title: 'Inventory Control', desc: 'Track stock in real-time, avoid waste.' },
-              { title: 'Easy Ordering', desc: 'Manage orders with clear roles for staff.' },
-              { title: 'Sales Insights', desc: 'Get reports on what\'s selling and what\'s not.' },
-            ].map((feature, idx) => (
-              <div key={idx} className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg shadow-md hover:shadow-lg transition transform hover:scale-105">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.desc}</p>
+              { problem: '❌ Missed orders due to poor communication', solution: '✅ Real-time kitchen screens keep orders on track' },
+              { problem: '❌ Wasting hours on manual scheduling', solution: '✅ Automated scheduling saves 10+ hours weekly' },
+              { problem: '❌ Inventory waste and food spoilage', solution: '✅ Real-time tracking prevents waste' },
+              { problem: '❌ Payroll errors and compliance issues', solution: '✅ Automated payroll, Alberta labor law compliant' },
+              { problem: '❌ Slow POS and payment processing', solution: '✅ Fast integrated payments with real-time reporting' },
+              { problem: '❌ Staff confusion and role conflicts', solution: '✅ Clear role management across locations' },
+            ].map((item, idx) => (
+              <div key={idx} className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition">
+                <p className="text-gray-700 mb-3 font-semibold">{item.problem}</p>
+                <p className="text-green-700 font-semibold">{item.solution}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Everything Your Restaurant Needs</h2>
+          <p className="text-center text-gray-600 mb-16 text-lg">All in one powerful app</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { icon: Calendar, title: 'Scheduling', desc: 'Create staff schedules in minutes with drag-and-drop ease.' },
+              { icon: DollarSign, title: 'Payroll', desc: 'Automate payroll calculations, compliant with Alberta labor laws.' },
+              { icon: Utensils, title: 'POS System', desc: 'Fast, integrated payments with real-time reporting.' },
+              { icon: ChefHat, title: 'Kitchen Screens', desc: 'Sync orders instantly to reduce errors.' },
+              { icon: Users, title: 'Staff Management', desc: 'Track performance and roles across multiple locations.' },
+              { icon: BarChart3, title: 'Menu Management', desc: 'Update menus instantly, no reprinting needed.' },
+              { icon: TrendingUp, title: 'Analytics', desc: 'Understand what customers love with sales insights.' },
+              { icon: Zap, title: 'Multi-Location', desc: 'Manage multiple restaurants from one dashboard.' },
+            ].map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <div key={idx} className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg shadow-md hover:shadow-lg transition transform hover:scale-105">
+                  <Icon className="w-10 h-10 text-orange-600 mb-3" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Affordable Plans for Every Restaurant</h2>
+          <p className="text-center text-gray-600 mb-12 text-lg">No hidden fees • 30-day free trial • Cancel anytime</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { name: 'Basic', price: '$69', desc: 'Perfect for small eateries', features: ['Up to 10 staff members', 'Basic POS', 'Scheduling', 'Inventory tracking', 'Email support'] },
+              { name: 'Pro', price: '$199', desc: 'For growing restaurants', features: ['Up to 50 staff members', 'Advanced POS', 'Multi-location support', 'Kitchen screens', 'Payroll integration', 'Priority support'], popular: true },
+              { name: 'Enterprise', price: 'Custom', desc: 'For restaurant chains', features: ['Unlimited staff', 'Full customization', 'API access', 'Dedicated account manager', '24/7 phone support', 'Custom integrations'] },
+            ].map((plan, idx) => (
+              <div key={idx} className={`p-8 rounded-lg shadow-md transition transform hover:scale-105 ${plan.popular ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white ring-2 ring-orange-600 relative' : 'bg-gray-50'}`}>
+                {plan.popular && <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-gray-900 px-4 py-1 rounded-full text-sm font-bold">MOST POPULAR</div>}
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <p className={`mb-4 ${plan.popular ? 'text-orange-100' : 'text-gray-600'}`}>{plan.desc}</p>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">{plan.price}</span>
+                  {plan.price !== 'Custom' && <span className={plan.popular ? 'text-orange-100' : 'text-gray-600'}>/month</span>}
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button className={`w-full py-3 rounded-lg font-semibold transition ${plan.popular ? 'bg-white text-orange-600 hover:bg-gray-100' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>
+                  Get Started
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-gray-600 mt-8">One-time $500 installation fee for setup and customization</p>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 bg-gradient-to-r from-orange-50 to-red-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">What Our Users Say</h2>
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Trusted by Restaurants Like Yours</h2>
           <p className="text-center text-gray-600 mb-12">Real feedback from restaurant owners and managers</p>
 
           <div className="grid md:grid-cols-3 gap-8 mb-12">
@@ -203,6 +286,38 @@ const LandingPage = () => {
           <div className="text-center">
             <button onClick={() => setShowTestimonialForm(true)} className="px-8 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition">
               Share Your Experience
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Get Started in 3 Easy Steps</h2>
+          <p className="text-center text-gray-600 mb-16 text-lg">From sign-up to serving in days</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { step: '1', title: 'Book Your Demo', desc: 'Schedule a free 30-minute demo with our team. We\'ll show you how DineSync works for your restaurant.' },
+              { step: '2', title: 'Customize Your Setup', desc: 'We customize the app for your restaurant\'s unique needs—menus, staff roles, locations, and more.' },
+              { step: '3', title: 'Launch & Succeed', desc: 'Go live and start saving time and money. Our support team is here to help every step of the way.' },
+            ].map((item, idx) => (
+              <div key={idx} className="relative">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center text-3xl font-bold">
+                    {item.step}
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-center text-gray-900 mb-3">{item.title}</h3>
+                <p className="text-center text-gray-600">{item.desc}</p>
+                {idx < 2 && <div className="hidden md:block absolute top-8 -right-4 text-3xl text-orange-300">→</div>}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <button onClick={() => setShowSignupModal(true)} className="px-8 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition flex items-center justify-center gap-2 mx-auto">
+              <span>Book Your Demo Now</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -282,30 +397,42 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             {/* Left */}
             <div>
-              <h3 className="font-bold mb-4">Restaurant Management App</h3>
-              <p className="text-gray-400 text-sm mb-4">Built for chefs, by a chef.</p>
-              <div className="space-y-2 text-sm text-gray-400">
-                <button onClick={() => scrollToSection('features')} className="block hover:text-orange-600">Features</button>
-                <button onClick={() => scrollToSection('testimonials')} className="block hover:text-orange-600">Testimonials</button>
-                <button onClick={() => scrollToSection('about')} className="block hover:text-orange-600">About</button>
+              <div className="flex items-center space-x-2 mb-4">
+                <ChefHat className="w-6 h-6 text-orange-600" />
+                <h3 className="font-bold text-lg">DineSync Solutions</h3>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">Restaurant management software built by chefs, for chefs.</p>
+              <div className="inline-block bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                🍁 Built in Alberta
               </div>
             </div>
 
-            {/* Middle */}
+            {/* Product */}
             <div>
-              <h3 className="font-bold mb-4">Created by Raghav Mahajan</h3>
+              <h3 className="font-bold mb-4">Product</h3>
               <div className="space-y-2 text-sm text-gray-400">
-                <a href="https://www.raghv.dev" target="_blank" rel="noopener noreferrer" className="block hover:text-orange-600">Portfolio: www.raghv.dev</a>
+                <button onClick={() => scrollToSection('features')} className="block hover:text-orange-600">Features</button>
+                <button onClick={() => scrollToSection('pricing')} className="block hover:text-orange-600">Pricing</button>
+                <button onClick={() => scrollToSection('testimonials')} className="block hover:text-orange-600">Testimonials</button>
+                <a href="#" className="block hover:text-orange-600">Security</a>
+              </div>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h3 className="font-bold mb-4">Company</h3>
+              <div className="space-y-2 text-sm text-gray-400">
+                <button onClick={() => scrollToSection('about')} className="block hover:text-orange-600">About Creator</button>
+                <a href="https://www.raghv.dev" target="_blank" rel="noopener noreferrer" className="block hover:text-orange-600">Portfolio</a>
                 <a href="https://www.linkedin.com/in/raghav-mahajan-17611b24b/" target="_blank" rel="noopener noreferrer" className="block hover:text-orange-600">LinkedIn</a>
-                <a href="https://www.instagram.com/ragh.v_/" target="_blank" rel="noopener noreferrer" className="block hover:text-orange-600">Instagram</a>
                 <a href="https://github.com/raghv-m" target="_blank" rel="noopener noreferrer" className="block hover:text-orange-600">GitHub</a>
               </div>
             </div>
 
-            {/* Right */}
+            {/* Contact */}
             <div>
               <h3 className="font-bold mb-4">Contact</h3>
               <div className="space-y-3 text-sm text-gray-400">
@@ -317,16 +444,28 @@ const LandingPage = () => {
                   <Phone className="w-4 h-4" />
                   <span>(825) 343-1168</span>
                 </div>
+                <div className="flex space-x-3 pt-2">
+                  <a href="https://www.linkedin.com/in/raghav-mahajan-17611b24b/" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600">
+                    <Linkedin className="w-5 h-5" />
+                  </a>
+                  <a href="https://www.instagram.com/ragh.v_/" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600">
+                    <Instagram className="w-5 h-5" />
+                  </a>
+                  <a href="https://github.com/raghv-m" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600">
+                    <Github className="w-5 h-5" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">© 2025 Raghav Mahajan. All rights reserved.</p>
+              <p className="text-gray-400 text-sm">© 2025 DineSync Solutions. All rights reserved. PIPEDA Compliant.</p>
               <div className="flex space-x-6 mt-4 md:mt-0 text-sm text-gray-400">
                 <a href="#" className="hover:text-orange-600">Privacy Policy</a>
                 <a href="#" className="hover:text-orange-600">Terms of Service</a>
+                <a href="#" className="hover:text-orange-600">PIPEDA Compliance</a>
               </div>
             </div>
           </div>
