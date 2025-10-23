@@ -13,7 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader,
-  SwapCw,
+  Repeat2,
   Plus,
 } from 'lucide-react';
 import axios from 'axios';
@@ -297,7 +297,7 @@ const SchedulePage = () => {
                       : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                   }`}
                 >
-                  <SwapCw className="w-4 h-4 inline mr-2" />
+                  <Repeat2 className="w-4 h-4 inline mr-2" />
                   Trade Shifts
                 </button>
                 <button
@@ -497,7 +497,7 @@ const SchedulePage = () => {
                           }}
                           className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
                         >
-                          <SwapCw className="w-4 h-4" />
+                          <Repeat2 className="w-4 h-4" />
                           Trade
                         </button>
                       </div>
@@ -554,7 +554,7 @@ const SchedulePage = () => {
                       }}
                       className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition flex items-center justify-center gap-2"
                     >
-                      <SwapCw className="w-4 h-4" />
+                      <Repeat2 className="w-4 h-4" />
                       Propose Trade
                     </button>
                   </div>
