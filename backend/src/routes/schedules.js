@@ -338,5 +338,235 @@ router.get('/available/list', authMiddleware, async (req, res) => {
   }
 });
 
+// ============ TRADE REQUESTS ============
+
+// Submit trade request
+router.post('/trades/request', authMiddleware, async (req, res) => {
+  try {
+    const { myShiftId, targetEmployeeId, targetShiftId, reason } = req.body;
+    const { orgId, id: userId } = req.user;
+
+    if (!myShiftId || !targetEmployeeId || !targetShiftId) {
+      return res.status(400).json({ error: 'All fields required' });
+    }
+
+    const tradeRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('tradeRequests')
+      .doc();
+
+    await tradeRef.set({
+      requestedBy: userId,
+      targetEmployeeId,
+      myShiftId,
+      targetShiftId,
+      reason: reason || '',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    res.status(201).json({
+      tradeId: tradeRef.id,
+      message: 'Trade request submitted',
+    });
+  } catch (error) {
+    console.error('Error submitting trade request:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get trade requests
+router.get('/trades/requests', authMiddleware, async (req, res) => {
+  try {
+    const { orgId, id: userId, role } = req.user;
+
+    const tradesRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('tradeRequests');
+
+    let query = tradesRef;
+    if (role !== 'Manager' && role !== 'Admin') {
+      query = query.where('requestedBy', '==', userId);
+    }
+
+    const snapshot = await query.orderBy('createdAt', 'desc').get();
+
+    const trades = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.json({ trades });
+  } catch (error) {
+    console.error('Error fetching trade requests:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve trade (admin only)
+router.post('/trades/:tradeId/approve', authMiddleware, requireRole(['Manager', 'Admin']), async (req, res) => {
+  try {
+    const { tradeId } = req.params;
+    const { orgId } = req.user;
+
+    const tradeRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('tradeRequests')
+      .doc(tradeId);
+
+    await tradeRef.update({
+      status: 'approved',
+      updatedAt: new Date(),
+    });
+
+    res.json({ message: 'Trade approved' });
+  } catch (error) {
+    console.error('Error approving trade:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Deny trade (admin only)
+router.post('/trades/:tradeId/deny', authMiddleware, requireRole(['Manager', 'Admin']), async (req, res) => {
+  try {
+    const { tradeId } = req.params;
+    const { orgId } = req.user;
+
+    const tradeRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('tradeRequests')
+      .doc(tradeId);
+
+    await tradeRef.update({
+      status: 'denied',
+      updatedAt: new Date(),
+    });
+
+    res.json({ message: 'Trade denied' });
+  } catch (error) {
+    console.error('Error denying trade:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ PICK REQUESTS ============
+
+// Submit pick request
+router.post('/picks/request', authMiddleware, async (req, res) => {
+  try {
+    const { shiftId, reason } = req.body;
+    const { orgId, id: userId } = req.user;
+
+    if (!shiftId) {
+      return res.status(400).json({ error: 'Shift ID required' });
+    }
+
+    const pickRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('pickRequests')
+      .doc();
+
+    await pickRef.set({
+      requestedBy: userId,
+      shiftId,
+      reason: reason || '',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    res.status(201).json({
+      pickId: pickRef.id,
+      message: 'Pick request submitted',
+    });
+  } catch (error) {
+    console.error('Error submitting pick request:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get pick requests
+router.get('/picks/requests', authMiddleware, async (req, res) => {
+  try {
+    const { orgId, id: userId, role } = req.user;
+
+    const picksRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('pickRequests');
+
+    let query = picksRef;
+    if (role !== 'Manager' && role !== 'Admin') {
+      query = query.where('requestedBy', '==', userId);
+    }
+
+    const snapshot = await query.orderBy('createdAt', 'desc').get();
+
+    const picks = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.json({ picks });
+  } catch (error) {
+    console.error('Error fetching pick requests:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve pick (admin only)
+router.post('/picks/:pickId/approve', authMiddleware, requireRole(['Manager', 'Admin']), async (req, res) => {
+  try {
+    const { pickId } = req.params;
+    const { orgId } = req.user;
+
+    const pickRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('pickRequests')
+      .doc(pickId);
+
+    await pickRef.update({
+      status: 'approved',
+      updatedAt: new Date(),
+    });
+
+    res.json({ message: 'Pick approved' });
+  } catch (error) {
+    console.error('Error approving pick:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Deny pick (admin only)
+router.post('/picks/:pickId/deny', authMiddleware, requireRole(['Manager', 'Admin']), async (req, res) => {
+  try {
+    const { pickId } = req.params;
+    const { orgId } = req.user;
+
+    const pickRef = getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('pickRequests')
+      .doc(pickId);
+
+    await pickRef.update({
+      status: 'denied',
+      updatedAt: new Date(),
+    });
+
+    res.json({ message: 'Pick denied' });
+  } catch (error) {
+    console.error('Error denying pick:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
 
