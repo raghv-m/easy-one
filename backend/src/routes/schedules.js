@@ -41,17 +41,58 @@ router.post('/shifts', authMiddleware, requireRole(['Manager']), async (req, res
   }
 });
 
+// Get all shifts for manager (all employees)
+router.get('/all', authMiddleware, async (req, res) => {
+  try {
+    const { orgId, role } = req.user;
+    const { weekStart, weekEnd } = req.query;
+
+    // Only managers and admins can view all shifts
+    if (role !== 'Manager' && role !== 'Admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const start = new Date(weekStart);
+    const end = new Date(weekEnd);
+
+    const snapshot = await getDb()
+      .collection('organizations')
+      .doc(orgId)
+      .collection('shifts')
+      .where('startTime', '>=', start)
+      .where('startTime', '<=', end)
+      .orderBy('startTime', 'asc')
+      .get();
+
+    const shifts = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.json({ shifts });
+  } catch (error) {
+    console.error('Get all shifts error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get shifts for employee
 router.get('/employee/:employeeId', authMiddleware, async (req, res) => {
   try {
     const { orgId } = req.user;
     const { employeeId } = req.params;
+    const { weekStart, weekEnd } = req.query;
+
+    const start = new Date(weekStart);
+    const end = new Date(weekEnd);
 
     const snapshot = await getDb()
       .collection('organizations')
       .doc(orgId)
       .collection('shifts')
       .where('employeeId', '==', employeeId)
+      .where('startTime', '>=', start)
+      .where('startTime', '<=', end)
       .orderBy('startTime', 'asc')
       .get();
 

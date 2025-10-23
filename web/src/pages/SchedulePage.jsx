@@ -60,8 +60,13 @@ const SchedulePage = () => {
       weekEnd.setDate(weekEnd.getDate() + 6);
 
       // Fetch all data in parallel
+      // Managers see all shifts, employees see only their own
+      const shiftsEndpoint = isAdmin
+        ? `${API_URL}/schedules/all`
+        : `${API_URL}/schedules/employee/${user?.uid}`;
+
       const [shiftsRes, employeesRes, openRes, tradesRes, picksRes] = await Promise.all([
-        axios.get(`${API_URL}/schedules/employee/${user?.uid}`, {
+        axios.get(shiftsEndpoint, {
           params: { weekStart: weekStart.toISOString(), weekEnd: weekEnd.toISOString() },
           headers,
         }),
