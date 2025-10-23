@@ -83,12 +83,18 @@ const KitchenScreenPage = () => {
     }
   };
 
+  // Filter orders by station - check if any item in the order has this station in its components
   const filteredOrders = selectedStation === 'All'
     ? orders
-    : orders.filter(order => 
-        order.items?.some(item => 
-          (item.station || item.category) === selectedStation
-        )
+    : orders.filter(order =>
+        order.items?.some(item => {
+          // Get the menu item to check its components
+          const menuItem = menuItems[item.name];
+          if (!menuItem) return false;
+
+          // Check if this item has a component for the selected station
+          return menuItem.components?.some(comp => comp.station === selectedStation);
+        })
       );
 
   const handleStartCooking = async (orderId, itemId) => {
@@ -286,7 +292,15 @@ const KitchenScreenPage = () => {
 
                 {/* Items */}
                 <div className="space-y-4">
-                  {order.items?.map((item, idx) => (
+                  {order.items?.filter(item => {
+                    // If viewing all stations, show all items
+                    if (selectedStation === 'All') return true;
+
+                    // Otherwise, only show items that have this station in their components
+                    const menuItem = menuItems[item.name];
+                    if (!menuItem) return false;
+                    return menuItem.components?.some(comp => comp.station === selectedStation);
+                  }).map((item, idx) => (
                     <div key={idx} className={`rounded-lg p-4 border-4 ${getStatusColor(item.status || 'pending')}`}>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
